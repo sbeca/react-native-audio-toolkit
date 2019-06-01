@@ -24,6 +24,7 @@ type State = {
   recordButtonDisabled: boolean,
 
   loopButtonStatus: boolean,
+  doubleSpeedButtonStatus: boolean,
   progress: number,
 
   error: string | null
@@ -47,6 +48,7 @@ export default class App extends Component<Props, State> {
       recordButtonDisabled: true,
 
       loopButtonStatus: false,
+      doubleSpeedButtonStatus: false,
       progress: 0,
 
       error: null
@@ -132,6 +134,7 @@ export default class App extends Component<Props, State> {
         console.log(err);
       } else {
         this.player.looping = this.state.loopButtonStatus;
+        this.player.speed = this.state.doubleSpeedButtonStatus ? 2.0 : 1.0;
       }
 
       this._updateState();
@@ -230,6 +233,15 @@ export default class App extends Component<Props, State> {
     }
   }
 
+  _toggleSpeed(value) {
+    this.setState({
+      doubleSpeedButtonStatus: value
+    });
+    if (this.player) {
+      this.player.speed = value ? 2.0 : 1.0;
+    }
+  }
+
   render() {
     return (
       <SafeAreaView>
@@ -247,6 +259,12 @@ export default class App extends Component<Props, State> {
             onValueChange={(value) => this._toggleLooping(value)}
             value={this.state.loopButtonStatus} />
           <Text>Toggle Looping</Text>
+        </View>
+        <View style={styles.settingsContainer}>
+          <Switch
+            onValueChange={(value) => this._toggleSpeed(value)}
+            value={this.state.doubleSpeedButtonStatus} />
+          <Text>Toggle Double Speed</Text>
         </View>
         <View style={styles.slider}>
           <Slider step={0.0001} disabled={this.state.playButtonDisabled} onValueChange={(percentage) => this._seek(percentage)} value={this.state.progress} />
