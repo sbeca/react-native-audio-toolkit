@@ -38,6 +38,13 @@ interface PlayerOptions {
      * (Default: false)
      */
     continuesToPlayInBackground?: boolean;
+
+    /**
+     * If set to a positive number, this values determines how often (in ms) to emit the 'progress' event which gives
+     * an accurate value for the current playback position.
+     * (Default: -1)
+     */
+    progressEventInterval?: number;
 }
 
 /**

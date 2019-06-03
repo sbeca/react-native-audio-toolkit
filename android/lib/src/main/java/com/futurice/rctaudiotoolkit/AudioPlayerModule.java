@@ -32,21 +32,28 @@ import java.lang.Thread;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class AudioPlayerModule extends ReactContextBaseJavaModule implements MediaPlayer.OnInfoListener,
         MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnSeekCompleteListener,
         MediaPlayer.OnBufferingUpdateListener, LifecycleEventListener, AudioManager.OnAudioFocusChangeListener {
     private static final String LOG_TAG = "AudioPlayerModule";
 
-    Map<Integer, MediaPlayer> playerPool = new HashMap<>();
-    Map<Integer, Boolean> playerAutoDestroy = new HashMap<>();
-    Map<Integer, Boolean> playerContinueInBackground = new HashMap<>();
-    Map<Integer, Callback> playerSeekCallback = new HashMap<>();
+    private Map<Integer, MediaPlayer> playerPool = new HashMap<>();
+    private Map<Integer, Boolean> playerAutoDestroy = new HashMap<>();
+    private Map<Integer, Boolean> playerContinueInBackground = new HashMap<>();
+    private Map<Integer, Callback> playerSeekCallback = new HashMap<>();
 
-    boolean looping = false;
     private ReactApplicationContext context;
     private AudioManager mAudioManager;
+    private Integer currentPlayerId;
     private Integer lastPlayerId;
+    private boolean looping = false;
+    private Integer progressEventInterval = -1;
+    private TimerTask timerTask;
+    private Timer timer;
 
     public AudioPlayerModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -191,6 +198,8 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         if (callback != null) {
             callback.invoke();
         }
+
+        stopTask();
     }
 
     private void destroy(Integer playerId) {
@@ -266,12 +275,10 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         player.setOnCompletionListener(this);
         player.setOnSeekCompleteListener(this);
         player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() { // Async preparing, so we need to run the callback after preparing has finished
-
             @Override
             public void onPrepared(MediaPlayer player) {
                 callback.invoke(null, getInfo(player));
             }
-
         });
 
         this.playerPool.put(playerId, player);
@@ -292,6 +299,10 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
 
         this.playerAutoDestroy.put(playerId, autoDestroy);
         this.playerContinueInBackground.put(playerId, continueInBackground);
+
+        if (options.hasKey("progressEventInterval") && !options.isNull("progressEventInterval")) {
+            this.progressEventInterval = (int) options.getDouble("progressEventInterval");
+        }
 
         try {
             player.prepareAsync();
@@ -330,6 +341,10 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
 
         if (options.hasKey("looping") && !options.isNull("looping")) {
             this.looping = options.getBoolean("looping");
+        }
+
+        if (options.hasKey("progressEventInterval") && !options.isNull("progressEventInterval")) {
+            this.progressEventInterval = (int) options.getDouble("progressEventInterval");
         }
 
         // `PlaybackParams` was only added in API 23
@@ -374,6 +389,8 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
             this.mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
             player.start();
 
+            doTimerTask(playerId);
+
             callback.invoke(null, getInfo(player));
         } catch (Exception e) {
             callback.invoke(errObj("playback", e.toString()));
@@ -389,7 +406,6 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         }
 
         try {
-
             player.pause();
 
             WritableMap info = getInfo(player);
@@ -401,10 +417,11 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
             emitEvent(playerId, "pause", data);
 
             callback.invoke(null, getInfo(player));
-
         } catch (Exception e) {
             callback.invoke(errObj("pause", e.toString()));
         }
+
+        stopTask();
     }
 
     @ReactMethod
@@ -439,6 +456,8 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         } catch (Exception e) {
             callback.invoke(errObj("stop", e.toString()));
         }
+
+        stopTask();
     }
 
     @ReactMethod
@@ -514,6 +533,8 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
             Log.d(LOG_TAG, "onCompletion(): Autodestroying player...");
             destroy(playerId);
         }
+
+        stopTask();
     }
 
     @Override
@@ -560,7 +581,6 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         {
             case AudioManager.AUDIOFOCUS_LOSS:
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                //MediaPlayer player = this.playerPool.get(this.lastPlayerId);
                 WritableMap data = new WritableNativeMap();
                 data.putString("message", "Lost audio focus, playback paused");
 
@@ -569,6 +589,36 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         }
     }
 
+    private void doTimerTask(Integer playerId) {
+        stopTask();
+
+        if (this.progressEventInterval > 0) {
+            this.currentPlayerId = playerId;
+            this.timerTask = new TimerTask() {
+            public void run() {
+                MediaPlayer player = this.playerPool.get(this.currentPlayerId);
+                if (player != null) {
+                    emitEvent(this.currentPlayerId, "progress", getInfo(player));
+                }
+            }};
+
+            this.timer = new Timer();
+            this.timer.schedule(timerTask, 0, this.progressEventInterval);
+        }
+    }
+
+    private void stopTask() {
+        if (this.timerTask != null) {
+            this.timerTask.cancel();
+            this.timerTask = null;
+        }
+
+        if (this.timer != null) {
+            this.timer.cancel();
+            this.timer.purge();
+            this.timer = null;
+        }
+    }
 
     // Utils
     public static boolean equals(Object a, Object b) {

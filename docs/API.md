@@ -27,7 +27,12 @@ Media methods
 
       // (Android only) Should playback continue if app is sent to background?
       // iOS will always pause in this case.
-      continuesToPlayInBackground : boolean (default: False)
+      continuesToPlayInBackground : boolean (default: False),
+
+      // If set to a positive number, this values determines how often (in ms)
+      // to emit the 'progress' event which gives an accurate value for the current
+      // playback position.
+      progressEventInterval : number (default: -1)
     }
     ```
 

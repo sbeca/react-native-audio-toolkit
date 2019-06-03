@@ -24,23 +24,28 @@
 
 @end
 
-@implementation AudioPlayer
+@implementation AudioPlayer {
+    NSNumber *_audioPlayerId;
+    id _progressUpdateTimer;
+    int _progressUpdateInterval;
+    NSDate *_prevProgressUpdateTime;
+}
 
 @synthesize bridge = _bridge;
 
 
--(NSMutableDictionary*) playerPool {
+- (NSMutableDictionary*) playerPool {
     if (!_playerPool) {
         _playerPool = [NSMutableDictionary new];
     }
     return _playerPool;
 }
 
--(AVPlayer*) playerForKey:(nonnull NSNumber*)key {
+- (AVPlayer*) playerForKey:(nonnull NSNumber*)key {
     return [_playerPool objectForKey:key];
 }
 
--(NSNumber*) keyForPlayer:(nonnull AVPlayer*)player {
+- (NSNumber*) keyForPlayer:(nonnull AVPlayer*)player {
     return [[_playerPool allKeysForObject:player] firstObject];
 }
 
@@ -84,6 +89,14 @@
     }
     
     return url;
+}
+
+- (void)emitEvent:(nonnull NSNumber*)playerId, forEvent:(NSString *)event, withData:(NSDictionary *)data) {
+    NSString *eventName = [NSString stringWithFormat:@"RCTAudioPlayerEvent:%@", playerId];
+    [self.bridge.eventDispatcher sendAppEventWithName:eventName
+                                                    body:@{@"event": event,
+                                                            @"data": data
+                                                        }];
 }
 
 #pragma mark React exposed methods
@@ -269,6 +282,9 @@ RCT_EXPORT_METHOD(play:(nonnull NSNumber*)playerId withCallback:(RCTResponseSend
     [player play];
     player.rate = player.speed;
 
+    _audioPlayerId = playerId;
+    [self startProgressTimer];
+
     callback(@[[NSNull null], @{@"duration": @(CMTimeGetSeconds(player.currentItem.asset.duration) * 1000),
                                 @"position": @(CMTimeGetSeconds(player.currentTime) * 1000)}]);
 }
@@ -358,6 +374,8 @@ RCT_EXPORT_METHOD(resume:(nonnull NSNumber*)playerId withCallback:(RCTResponseSe
     [player play];
     player.rate = player.speed;
 
+    [self startProgressTimer];
+
     callback(@[[NSNull null]]);
 }
 
@@ -375,7 +393,7 @@ RCT_EXPORT_METHOD(getCurrentTime:(nonnull NSNumber*)playerId withCallback:(RCTRe
                                 @"position": @(CMTimeGetSeconds(player.currentTime) * 1000)}]);
 }
 
--(void)itemDidFinishPlaying:(NSNotification *) notification {
+- (void)itemDidFinishPlaying:(NSNotification *) notification {
     NSNumber *playerId = ((ReactPlayerItem *)notification.object).reactPlayerId;
     ReactPlayer *player = (ReactPlayer *)[self playerForKey:playerId];
     if (player.autoDestroy) {
@@ -395,6 +413,8 @@ RCT_EXPORT_METHOD(getCurrentTime:(nonnull NSNumber*)playerId withCallback:(RCTRe
                                                             }];
         [player play];
         player.rate = player.speed;
+
+        [self startProgressTimer];
     } else {
         NSString *eventName = [NSString stringWithFormat:@"RCTAudioPlayerEvent:%@", playerId];
         [self.bridge.eventDispatcher sendAppEventWithName:eventName
@@ -409,7 +429,34 @@ RCT_EXPORT_METHOD(getCurrentTime:(nonnull NSNumber*)playerId withCallback:(RCTRe
     if (player) {
         [player pause];
         [[self playerPool] removeObjectForKey:playerId];
+    }
+}
 
+- (void)stopProgressTimer {
+    [_progressUpdateTimer invalidate];
+}
+
+- (void)startProgressTimer {
+    [self stopProgressTimer];
+
+    _progressUpdateInterval = 100;
+    _prevProgressUpdateTime = [NSDate date];
+
+    _progressUpdateTimer = [CADisplayLink displayLinkWithTarget:self selector:@selector(sendProgressUpdate)];
+    [_progressUpdateTimer addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+}
+
+- (void)sendProgressUpdate {
+    ReactPlayer *player = (ReactPlayer *)[self playerForKey:_audioPlayerId];
+    if (player) {
+        if (([_prevProgressUpdateTime timeIntervalSinceNow] * -1000.0) >= _progressUpdateInterval) {
+             NSString *eventName = [NSString stringWithFormat:@"RCTAudioPlayerEvent:%@", _audioPlayerId];
+            [self.bridge.eventDispatcher sendAppEventWithName:eventName
+                                               body:@{@"event": @"progress",
+                                                      @"data" : @{@"currentTime": @(CMTimeGetSeconds(player.currentTime) * 1000)}}];
+
+            _prevProgressUpdateTime = [NSDate date];
+        } 
     }
 }
 

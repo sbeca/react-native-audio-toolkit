@@ -12,6 +12,7 @@ let playerId = 0;
 const defaultPlayerOptions = {
   autoDestroy: true,
   continuesToPlayInBackground: false,
+  progressEventInterval: -1
 };
 
 /**
@@ -32,6 +33,8 @@ class Player extends EventEmitter {
         options.autoDestroy = defaultPlayerOptions.autoDestroy;
       if (options.continuesToPlayInBackground == null)
         options.continuesToPlayInBackground = defaultPlayerOptions.continuesToPlayInBackground;
+      if (options.progressEventInterval == null)
+        options.progressEventInterval = defaultPlayerOptions.progressEventInterval;
 
       this._options = options;
     }
@@ -81,10 +84,9 @@ class Player extends EventEmitter {
   }
 
   _handleEvent(event, data) {
-    // console.log('event: ' + event + ', data: ' + JSON.stringify(data));
     switch (event) {
       case 'progress':
-        // TODO
+        this._storeInfo(data);
         break;
       case 'ended':
         this._updateState(null, MediaStates.PREPARED);
@@ -95,7 +97,6 @@ class Player extends EventEmitter {
         break;
       case 'error':
         this._state = MediaStates.ERROR;
-        // this.emit('error', data);
         break;
       case 'pause':
         this._state = MediaStates.PAUSED;
