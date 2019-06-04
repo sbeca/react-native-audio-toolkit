@@ -28,13 +28,17 @@ interface PlayerOptions {
     /**
      * Boolean to indicate whether the player should self-destruct after playback is finished.
      * If this is not set, you are responsible for destroying the object by calling `destroy()`.
+     * 
      * (Default: true)
      */
     autoDestroy?: boolean;
 
     /**
-     * (Android only) Should playback continue if app is sent to background?
-     * iOS will always pause in this case.
+     * Boolean to indicate whether playback should continue when app is sent to background.
+     * 
+     * iOS support for playing in background requires extra set up which is detailed further here:
+     * https://github.com/react-native-community/react-native-audio-toolkit/blob/master/docs/API.md
+     * 
      * (Default: false)
      */
     continuesToPlayInBackground?: boolean;
@@ -188,17 +192,23 @@ declare class Player extends EventEmitter {
 
 interface RecorderOptions {
     /**
-     * Set bitrate for the recorder, in bits per second (Default: 128000)
+     * Set bitrate for the recorder, in bits per second.
+     * 
+     * (Default: 128000)
      */
     bitrate: number;
 
     /**
-     * Set number of channels (Default: 2)
+     * Set number of channels.
+     * 
+     * (Default: 2)
      */
     channels: number;
 
     /**
-     * Set how many samples per second (Default: 44100)
+     * Set how many samples per second.
+     * 
+     * (Default: 44100)
      */
     sampleRate: number;
 

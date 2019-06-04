@@ -25,11 +25,19 @@ Media methods
       // destroying the object by calling player.destroy().
       autoDestroy : boolean (default: True),
 
-      // (Android only) Should playback continue if app is sent to background?
-      // iOS will always pause in this case.
+      // Boolean to indicate whether playback should continue when app is sent to background.
+      // For iOS background playback, please refer the note below.
       continuesToPlayInBackground : boolean (default: False)
     }
     ```
+
+    NOTE: To support background play on iOS, open your Xcode project and enable the 'Audio, AirPlay, and Picture' option in 'Project - Capabilities - Background Modes'. Expand the screenshot below for details:
+    <details>
+    <summary>Screenshot</summary>
+
+    ![Screenshot](https://cloud.githubusercontent.com/assets/1323963/23828922/69c128ca-0724-11e7-9d56-167407040625.png)
+
+    </details>
 
 
 * `prepare(Function callback)`
