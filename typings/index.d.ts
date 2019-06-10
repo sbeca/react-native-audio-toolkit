@@ -38,6 +38,12 @@ interface PlayerOptions {
      * (Default: false)
      */
     continuesToPlayInBackground?: boolean;
+
+    /**
+     * Optional headers to be sent together with the request for the data when accessing audio via a network URL.
+     * (Default: null)
+     */
+    headers?: { [key: string]: string };
 }
 
 /**

@@ -95,8 +95,7 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         payload.putString("event", event);
         payload.putMap("data", data);
 
-        this.context
-                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+        this.context.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit("RCTAudioPlayerEvent:" + playerId, payload);
     }
 
@@ -153,7 +152,7 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         if (file.exists()) {
             return Uri.fromFile(file);
         }
-        
+
         // Try finding file in Android "raw" resources
         if (path.lastIndexOf('.') != -1) {
             fileNameWithoutExt = path.substring(0, path.lastIndexOf('.'));
@@ -161,8 +160,7 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
             fileNameWithoutExt = path;
         }
 
-        int resId = this.context.getResources().getIdentifier(fileNameWithoutExt,
-            "raw", this.context.getPackageName());
+        int resId = this.context.getResources().getIdentifier(fileNameWithoutExt, "raw", this.context.getPackageName());
         if (resId != 0) {
             return Uri.parse("android.resource://" + this.context.getPackageName() + "/" + resId);
         }
@@ -241,21 +239,20 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
 
         Uri uri = uriFromPath(path);
 
-        //MediaPlayer player = MediaPlayer.create(this.context, uri, null, attributes);
         MediaPlayer player = new MediaPlayer();
 
-        /*
-        AudioAttributes attributes = new AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_UNKNOWN)
-            .setContentType(AudioAttributes.CONTENT_TYPE_UNKNOWN)
-            .build();
-
-        player.setAudioAttributes(attributes);
-        */
+        ReadableMap headers = null;
+        if (options.hasKey("headers")) {
+            headers = options.getMap("continuesToPlayInBackground");
+        }
 
         try {
             Log.d(LOG_TAG, uri.getPath());
-            player.setDataSource(this.context, uri);
+            if (headers != null) {
+                player.setDataSource(this.context, uri, headers);
+            } else {
+                player.setDataSource(this.context, uri);
+            }
         } catch (IOException e) {
             callback.invoke(errObj("invalidpath", e.toString()));
             return;
@@ -265,27 +262,25 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         player.setOnInfoListener(this);
         player.setOnCompletionListener(this);
         player.setOnSeekCompleteListener(this);
-        player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() { // Async preparing, so we need to run the callback after preparing has finished
 
+        // Async preparing, so we need to run the callback after preparing has finished
+        player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer player) {
                 callback.invoke(null, getInfo(player));
             }
-
         });
 
         this.playerPool.put(playerId, player);
 
         // Auto destroy player by default
         boolean autoDestroy = true;
-
         if (options.hasKey("autoDestroy")) {
             autoDestroy = options.getBoolean("autoDestroy");
         }
 
         // Don't continue in background by default
         boolean continueInBackground = false;
-
         if (options.hasKey("continuesToPlayInBackground")) {
             continueInBackground = options.getBoolean("continuesToPlayInBackground");
         }
@@ -338,9 +333,9 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
 
             boolean needToPauseAfterSet = false;
             if (options.hasKey("speed") && !options.isNull("speed")) {
-                // If the player wasn't already playing, then setting the speed value to a non-zero value
-                // will start it playing and we don't want that so we need to make sure to pause it straight
-                // after setting the speed value
+                // If the player wasn't already playing, then setting the speed value to a
+                // non-zero value will start it playing and we don't want that so we need to
+                // make sure to pause it straight after setting the speed value
                 boolean wasAlreadyPlaying = player.isPlaying();
                 float speedValue = (float) options.getDouble("speed");
                 needToPauseAfterSet = !wasAlreadyPlaying && speedValue != 0.0f;
@@ -554,21 +549,17 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
     }
 
     // Audio Focus
-    public void onAudioFocusChange(int focusChange)
-    {
-        switch (focusChange)
-        {
-            case AudioManager.AUDIOFOCUS_LOSS:
-            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                //MediaPlayer player = this.playerPool.get(this.lastPlayerId);
-                WritableMap data = new WritableNativeMap();
-                data.putString("message", "Lost audio focus, playback paused");
+    public void onAudioFocusChange(int focusChange) {
+        switch (focusChange) {
+        case AudioManager.AUDIOFOCUS_LOSS:
+        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+            WritableMap data = new WritableNativeMap();
+            data.putString("message", "Lost audio focus, playback paused");
 
-                this.emitEvent(this.lastPlayerId, "forcePause", data);
-                break;
+            this.emitEvent(this.lastPlayerId, "forcePause", data);
+            break;
         }
     }
-
 
     // Utils
     public static boolean equals(Object a, Object b) {

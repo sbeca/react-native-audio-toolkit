@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add Typescript typings
 - Add ability to set playback speed for audio player
 - Add ability to pause a Recorder
+- Add ability to set header data when requesting to play audio from a network URL
 - Android: Add ability to record to AAC
 - iOS: Added possibility to record from Bluetooth microphone
 

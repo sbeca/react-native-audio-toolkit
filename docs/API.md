@@ -27,7 +27,11 @@ Media methods
 
       // (Android only) Should playback continue if app is sent to background?
       // iOS will always pause in this case.
-      continuesToPlayInBackground : boolean (default: False)
+      continuesToPlayInBackground : boolean (default: False),
+
+      // Optional headers to be sent together with the request for the data
+      // when accessing audio via a network URL.
+      headers : Object (default: null)
     }
     ```
 

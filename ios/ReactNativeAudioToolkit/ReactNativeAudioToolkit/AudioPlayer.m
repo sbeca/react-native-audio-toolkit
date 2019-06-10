@@ -110,9 +110,17 @@ RCT_EXPORT_METHOD(prepare:(nonnull NSNumber*)playerId
         callback(@[dict]);
         return;
     }
-    
+
+    NSDictionary *assetOptions = [NSDictionary dictionary];
+
+    // Add headers if provided
+    NSDictionary *headers = [options objectForKey:@"headers"];
+    if (headers) {
+        [assetOptions setObject:headers forKey:@"AVURLAssetHTTPHeaderFieldsKey"]
+    }
+
     // Load asset from the url
-    AVURLAsset *asset = [AVURLAsset assetWithURL: url];
+    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:url options:assetOptions];
     ReactPlayerItem *item = (ReactPlayerItem *)[ReactPlayerItem playerItemWithAsset: asset];
     item.reactPlayerId = playerId;
     

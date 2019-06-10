@@ -12,6 +12,7 @@ let playerId = 0;
 const defaultPlayerOptions = {
   autoDestroy: true,
   continuesToPlayInBackground: false,
+  headers: null,
 };
 
 /**
@@ -32,6 +33,8 @@ class Player extends EventEmitter {
         options.autoDestroy = defaultPlayerOptions.autoDestroy;
       if (options.continuesToPlayInBackground == null)
         options.continuesToPlayInBackground = defaultPlayerOptions.continuesToPlayInBackground;
+      if (options.headers == null)
+        options.headers = defaultPlayerOptions.headers;
 
       this._options = options;
     }
