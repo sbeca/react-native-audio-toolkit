@@ -22,6 +22,8 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
+import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -241,9 +243,22 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
 
         MediaPlayer player = new MediaPlayer();
 
-        ReadableMap headers = null;
+        Map<String, String> headers = null;
         if (options.hasKey("headers")) {
-            headers = options.getMap("continuesToPlayInBackground");
+            ReadableMap headersFromJS = options.getMap("headers");
+            if (headersFromJS != null) {
+                headers = new HashMap<>();
+                ReadableMapKeySetIterator iterator = headersFromJS.keySetIterator();
+                while (iterator.hasNextKey()) {
+                    String key = iterator.nextKey();
+                    ReadableType type = headersFromJS.getType(key);
+                    if (type == ReadableType.String) {
+                        headers.put(key, headersFromJS.getString(key));
+                    } else {
+                        Log.w(LOG_TAG, "non-string header value was give for '" + key + "'");
+                    }
+                }
+            }
         }
 
         try {
