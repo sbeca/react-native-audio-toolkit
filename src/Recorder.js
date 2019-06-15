@@ -1,4 +1,7 @@
-'use strict';
+/**
+ * @format
+ * @flow
+ */
 
 import {
   NativeModules,
@@ -95,7 +98,7 @@ class Recorder extends EventEmitter {
 
     // Start recording
     tasks.push((next) => {
-        RCTAudioRecorder.record(this._recorderId, next);
+      RCTAudioRecorder.record(this._recorderId, next);
     });
 
     async.series(tasks, (err) => {
@@ -151,12 +154,12 @@ class Recorder extends EventEmitter {
     RCTAudioRecorder.destroy(this._recorderId, callback);
   }
 
-  get state()       { return this._state;                          }
-  get canRecord()   { return this._state >= MediaStates.PREPARED;  }
-  get canPrepare()  { return this._state == MediaStates.IDLE;      }
+  get state() { return this._state; }
+  get canRecord() { return this._state >= MediaStates.PREPARED; }
+  get canPrepare() { return this._state == MediaStates.IDLE; }
   get isRecording() { return this._state == MediaStates.RECORDING; }
-  get isPrepared()  { return this._state == MediaStates.PREPARED;  }
-  get fsPath()      { return this._fsPath; }
+  get isPrepared() { return this._state == MediaStates.PREPARED; }
+  get fsPath() { return this._fsPath; }
 }
 
 export default Recorder;

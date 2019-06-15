@@ -1,3 +1,8 @@
+/**
+ * @format
+ * @flow
+ */
+
 import { NativeModules, DeviceEventEmitter, NativeAppEventEmitter, Platform } from 'react-native';
 
 import _ from 'lodash';

@@ -1,4 +1,7 @@
-'use strict';
+/**
+ * @format
+ * @flow
+ */
 
 import Player from './src/Player';
 import Recorder from './src/Recorder';

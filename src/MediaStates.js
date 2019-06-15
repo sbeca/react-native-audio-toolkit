@@ -1,4 +1,7 @@
-'use strict';
+/**
+ * @format
+ * @flow
+ */
 
 let MediaStates = {
   DESTROYED: -2,

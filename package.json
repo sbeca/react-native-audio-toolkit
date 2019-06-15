@@ -2,17 +2,21 @@
   "name": "react-native-audio-toolkit",
   "version": "1.0.6",
   "description": "Cross-platform audio library for React Native",
-  "main": "index.js",
+  "main": "lib/index.js",
   "types": "typings/index.d.ts",
   "files": [
     "/android",
     "/index.js",
     "/ios",
+    "/lib",
     "/src",
     "/typings"
   ],
   "scripts": {
-    "start": "node node_modules/react-native/local-cli/cli.js start"
+    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "flow": "flow",
+    "build": "babel index.js src/ -d lib/",
+    "prepublish": "npm run build"
   },
   "homepage": "https://github.com/react-native-community/react-native-audio-toolkit#readme",
   "license": "MIT",
@@ -20,9 +24,18 @@
     "type": "git",
     "url": "https://github.com/react-native-community/react-native-audio-toolkit.git"
   },
+  "peerDependencies": {
+    "react-native": ">=0.57 <0.60"
+  },
   "dependencies": {
     "async": "^2.0.0",
     "eventemitter3": "^1.2.0",
     "lodash": "^4.13.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-flow": "^6.23.0",
+    "flow-bin": "^0.100.0",
+    "react-native": "^0.59.9"
   }
 }
