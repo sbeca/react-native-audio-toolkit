@@ -1,6 +1,10 @@
 package com.reactnativecommunity.rctaudiotoolkit;
 
 import android.annotation.TargetApi;
+import android.content.Context;
+import android.content.ContextWrapper;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Environment;
@@ -8,7 +12,6 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.net.Uri;
 import android.webkit.URLUtil;
-import android.content.ContextWrapper;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -41,13 +44,19 @@ public class AudioManagerModule extends ReactContextBaseJavaModule implements Au
 
     // NOTE: Values must be kept in sync with AudioManager.js
     public enum AudioPriority {
-        MIX_WITH_OTHER_APPS(0), SILENCE_OTHER_APPS(1)
+        MIX_WITH_OTHER_APPS(0), SILENCE_OTHER_APPS(1);
+
+        public final int value;
+
+        AudioPriority(int value) {
+            this.value = value;
+        }
     }
 
     public AudioManagerModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.context = reactContext;
-        this.audioManager = (AudioManager) Context.getSystemService(Context.AUDIO_SERVICE);
+        this.audioManager = (AudioManager) this.context.getSystemService(Context.AUDIO_SERVICE);
     }
 
     @Override
@@ -63,7 +72,7 @@ public class AudioManagerModule extends ReactContextBaseJavaModule implements Au
         }
 
         if (this.audioManager == null) {
-            this.audioManager = (AudioManager) Context.getSystemService(Context.AUDIO_SERVICE);
+            this.audioManager = (AudioManager) this.context.getSystemService(Context.AUDIO_SERVICE);
         }
 
         if (priority == AudioPriority.SILENCE_OTHER_APPS) {
@@ -87,7 +96,7 @@ public class AudioManagerModule extends ReactContextBaseJavaModule implements Au
         if (res == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
             callback.invoke(false);
         } else if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            currentAudioPriority = SILENCE_OTHER_APPS;
+            currentAudioPriority = AudioPriority.SILENCE_OTHER_APPS;
             callback.invoke(true);
         } else {
             // TODO: Throw unhandled error
@@ -102,14 +111,14 @@ public class AudioManagerModule extends ReactContextBaseJavaModule implements Au
 
         this.previousFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                 .setAudioAttributes(playbackAttributes).setWillPauseWhenDucked(false)
-                .setOnAudioFocusChangeListener(this, mMyHandler).build();
+                .setOnAudioFocusChangeListener(this).build();
 
         int res = this.audioManager.requestAudioFocus(this.previousFocusRequest);
 
         if (res == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
             callback.invoke(false);
         } else if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            currentAudioPriority = SILENCE_OTHER_APPS;
+            currentAudioPriority = AudioPriority.SILENCE_OTHER_APPS;
             callback.invoke(true);
         } else {
             // TODO: Throw unhandled error
@@ -118,12 +127,12 @@ public class AudioManagerModule extends ReactContextBaseJavaModule implements Au
     }
 
     private void abandonAudioFocus(Callback callback) {
-        int res = this.audioManager.abandonAudioFocusRequest(this);
+        int res = this.audioManager.abandonAudioFocus(this);
 
         if (res == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
             callback.invoke(false);
         } else if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            currentAudioPriority = MIX_WITH_OTHER_APPS;
+            currentAudioPriority = AudioPriority.MIX_WITH_OTHER_APPS;
             callback.invoke(true);
         } else {
             // TODO: Throw unhandled error
@@ -148,7 +157,7 @@ public class AudioManagerModule extends ReactContextBaseJavaModule implements Au
         if (res == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
             callback.invoke(false);
         } else if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            currentAudioPriority = MIX_WITH_OTHER_APPS;
+            currentAudioPriority = AudioPriority.MIX_WITH_OTHER_APPS;
             callback.invoke(true);
         } else {
             // TODO: Throw unhandled error
@@ -158,6 +167,7 @@ public class AudioManagerModule extends ReactContextBaseJavaModule implements Au
         this.previousFocusRequest = null;
     }
 
+    @Override
     public void onAudioFocusChange(int focusChange) {
         // Don't need to do anything here yet
 
