@@ -123,8 +123,12 @@ RCT_EXPORT_METHOD(prepare:(nonnull NSNumber*)playerId
                                                object:item];
     
     // Set audio session
+    NSNumber *continuesToPlayInBackground = [options objectForKey:@"continuesToPlayInBackground"];
+    BOOL continuesToPlayInBackgroundBool = continuesToPlayInBackground && [continuesToPlayInBackground boolValue];
+    AVAudioSessionCategory category = continuesToPlayInBackgroundBool ? AVAudioSessionCategoryPlayback
+                                                                      : AVAudioSessionCategoryAmbient;
     NSError *error = nil;
-    [[AVAudioSession sharedInstance] setCategory: AVAudioSessionCategoryPlayback error: &error];
+    [[AVAudioSession sharedInstance] setCategory:category error:&error];
     if (error) {
         NSDictionary* dict = [Helpers errObjWithCode:@"preparefail"
                                          withMessage:@"Failed to set audio session category."];
