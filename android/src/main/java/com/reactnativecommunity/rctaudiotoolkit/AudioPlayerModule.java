@@ -383,7 +383,7 @@ public class AudioPlayerModule extends ReactContextBaseJavaModule implements Med
         }
 
         try {
-            this.mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+            // this.mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
             player.start();
 
             callback.invoke(null, getInfo(player));
