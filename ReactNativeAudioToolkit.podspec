@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.license      = "MIT"
   s.author       = { "Rasmus Eskola" => "fruitiex@gmail.com" }
   s.platforms    = { :ios => "9.0", :tvos => "9.0" }
-  s.source       = { :git => "https://github.com/sbeca/react-native-audio-toolkit.git#for-app", :commit => "f25de2ef5b5024557ecf00e1d3ef34e92e75dc83" }
+  s.source       = { :git => "https://github.com/sbeca/react-native-audio-toolkit.git#for-app", :commit => "31c8edf02e0b8be002eba5dd955dbc0ef3e3684a" }
   s.source_files = "ios/**/*.{h,m}"
 
   s.dependency "React"
