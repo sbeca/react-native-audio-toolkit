@@ -195,7 +195,14 @@ RCT_EXPORT_METHOD(prepare:(nonnull NSNumber*)playerId
     }
 
     // Wait until player's current item is ready or has failed
+    NSTimeInterval startTime = [[NSDate date] timeIntervalSince1970];
     while (player.currentItem.status == AVPlayerItemStatusUnknown) {
+        NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
+        if (currentTime > (startTime + 5)) {
+            NSLog(@"WARNING: Waited for 5 seconds for player.currentItem.status to not be AVPlayerItemStatusUnknown and that did not occur");
+            break;
+        }
+
         [NSThread sleepForTimeInterval:0.01f];
     }
 
@@ -208,7 +215,14 @@ RCT_EXPORT_METHOD(prepare:(nonnull NSNumber*)playerId
     }
 
     //make sure loadedTimeRanges is not null
+    startTime = [[NSDate date] timeIntervalSince1970];
     while (player.currentItem.loadedTimeRanges.firstObject == nil){
+        NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
+        if (currentTime > (startTime + 5)) {
+            NSLog(@"WARNING: Waited for 5 seconds for player.currentItem.loadedTimeRanges.firstObject to not be nil and that did not occur");
+            break;
+        }
+
         [NSThread sleepForTimeInterval:0.01f];
     }
     
@@ -222,7 +236,14 @@ RCT_EXPORT_METHOD(prepare:(nonnull NSNumber*)playerId
     }
     Float64 loadedDurationSeconds = 0;
     Float64 totalDurationSeconds = CMTimeGetSeconds(player.currentItem.duration);
+    startTime = [[NSDate date] timeIntervalSince1970];
     while (loadedDurationSeconds < 10 && loadedDurationSeconds < totalDurationSeconds){
+        NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
+        if (currentTime > (startTime + 5)) {
+            NSLog(@"WARNING: Waited for 5 seconds to preload enough data and that did not occur");
+            break;
+        }
+
         NSValue *val = player.currentItem.loadedTimeRanges.firstObject;
         CMTimeRange timeRange;
         [val getValue:&timeRange];
