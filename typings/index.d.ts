@@ -14,6 +14,12 @@ declare enum MediaStates {
     PAUSED = 5
 }
 
+declare enum PlaybackCategories {
+    Playback = 1,
+    Ambient = 2,
+    SoloAmbient = 3,
+}
+
 interface BaseError<T> {
     err: "invalidpath" | "preparefail" | "startfail" | "notfound" | "stopfail" | T;
     message: string;
@@ -49,6 +55,19 @@ interface PlayerOptions {
      * (Default: false)
      */
     continuesToPlayInBackground?: boolean;
+
+    /**
+     * (iOS only) Define the audio session category
+     * (Default: Playback)
+     */
+    category?: PlaybackCategories;
+
+    /**
+     * Boolean to determine whether other audio sources on the device will mix
+     * with sounds being played back by this module.
+     * (Default: false)
+     */
+    mixWithOthers?: boolean;
 }
 
 /**
@@ -245,6 +264,13 @@ interface RecorderOptions {
      * (Default: 'medium')
      */
     quality: string;
+
+    /**
+     * Optional argument to activate metering events.
+     * This will cause a 'meter' event to fire every given milliseconds,
+     * e.g. 250 will fire 4 time in a second.
+     */
+    meteringInterval: number;
 }
 
 /**
